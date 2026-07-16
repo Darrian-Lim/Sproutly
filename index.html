@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sproutly</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#8FBF9F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sproutly">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+:root{
+  --bg-cream:#FBF6EF;
+  --sprig-green:#8FBF9F;
+  --sprig-green-dark:#6FA382;
+  --clay-blush:#F2C4B3;
+  --sky-mist:#C9DDE4;
+  --ink-soft:#4A4640;
+  --ink-faint:#7A7268;
+  --alert-amber:#E8B65A;
+  --card:#FFFFFF;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Nunito',sans-serif;background:#EDE7DC;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;color:var(--ink-soft);}
+h1,h2,h3,.display{font-family:'Fredoka',sans-serif;}
+
+.phone{
+  width:390px;height:780px;background:var(--bg-cream);border-radius:44px;
+  box-shadow:0 30px 60px rgba(74,70,64,0.25);
+  display:flex;flex-direction:column;overflow:hidden;position:relative;
+  border:8px solid #2b2824;
+}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:26px;background:#2b2824;border-radius:0 0 18px 18px;z-index:20;}
+
+/* On a real phone (installed PWA or mobile browser), drop the desktop "device mockup"
+   frame and let the app fill the actual screen. The frame above is only for previewing
+   on a desktop browser. */
+@media (max-width:480px){
+  body{padding:0;min-height:100vh;min-height:100dvh;}
+  .phone{
+    width:100%;height:100vh;height:100dvh;border-radius:0;border:none;box-shadow:none;
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+  }
+  .notch{display:none;}
+}
+
+.topbar{
+  padding:22px 20px 10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.topbar .streak{display:flex;align-items:center;gap:5px;background:var(--card);padding:6px 10px;border-radius:20px;font-weight:800;font-size:13px;box-shadow:0 2px 6px rgba(74,70,64,0.06);}
+.topbar .mini-pet{width:38px;height:38px;cursor:pointer;}
+.topbar .app-name{font-size:15px;font-weight:600;color:var(--ink-faint);letter-spacing:0.5px;}
+
+.content{flex:1;overflow-y:auto;padding:6px 20px 100px 20px;}
+.content::-webkit-scrollbar{display:none;}
+
+.tabbar{
+  position:absolute;bottom:0;left:0;right:0;background:var(--card);
+  border-top:1px solid rgba(74,70,64,0.08);
+  display:flex;justify-content:space-around;align-items:center;padding:10px 6px 22px 6px;
+}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--ink-faint);cursor:pointer;padding:4px 8px;border-radius:14px;transition:all .15s ease;background:none;border:none;font-family:'Nunito',sans-serif;}
+.tab.active{color:var(--sprig-green-dark);background:rgba(143,191,159,0.15);}
+.tab svg{width:22px;height:22px;}
+
+.card{background:var(--card);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(74,70,64,0.05);}
+.section-title{font-size:13px;font-weight:800;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.6px;margin:18px 0 8px 2px;}
+.section-title:first-child{margin-top:6px;}
+
+/* Mood row */
+.mood-row{display:flex;justify-content:space-between;gap:6px;}
+.welcome-text{font-family:'Fredoka';font-size:20px;font-weight:600;color:var(--ink-soft);margin:4px 0 14px 2px;}
+.glance-strip{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:16px;cursor:pointer;box-shadow:0 2px 8px rgba(74,70,64,0.05);}
+.glance-icon{font-size:20px;flex-shrink:0;}
+.glance-label{font-size:9.5px;font-weight:800;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.4px;}
+.glance-title{font-weight:700;font-size:13.5px;}
+.glance-sub{margin-left:auto;font-size:11px;font-weight:700;color:var(--sprig-green-dark);white-space:nowrap;text-align:right;}
+.mood-history-row{display:flex;gap:6px;justify-content:space-between;}
+.mh-chip{flex:1;text-align:center;background:var(--bg-cream);border-radius:10px;padding:8px 0;font-size:16px;}
+.recurring-label{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink-faint);margin-top:8px;cursor:pointer;}
+.mood-btn{flex:1;background:var(--card);border:2px solid transparent;border-radius:16px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s ease;}
+.mood-btn:hover{transform:translateY(-2px);}
+.mood-btn.selected{border-color:var(--sprig-green);background:rgba(143,191,159,0.12);}
+.mood-btn.locked{cursor:default;opacity:0.4;}
+.mood-btn.locked:hover{transform:none;}
+.mood-btn.selected.locked{opacity:1;}
+.mood-locked-note{text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-faint);margin-top:4px;}
+.mood-btn .emoji{font-size:24px;display:block;}
+.mood-btn .label{font-size:10px;font-weight:700;color:var(--ink-faint);margin-top:2px;display:block;}
+
+/* Pet stage */
+.pet-hero{display:flex;flex-direction:column;align-items:center;padding:14px 0 6px 0;cursor:pointer;position:relative;}
+.pet-hero svg{width:180px;height:180px;}
+.pet-name{font-weight:700;font-size:18px;margin-top:6px;}
+.pet-stage{font-size:12px;color:var(--ink-faint);font-weight:700;background:var(--sky-mist);padding:3px 12px;border-radius:12px;margin-top:4px;}
+
+@keyframes breathe{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-4px) scale(1.015);}}
+.breathing{animation:breathe 3.2s ease-in-out infinite;}
+@keyframes bounce{0%{transform:scale(1);}30%{transform:scale(1.12,0.9);}55%{transform:scale(0.92,1.1);}100%{transform:scale(1);}}
+.bouncing{animation:bounce .5s ease;}
+@keyframes petJump{0%{transform:translateY(0) scale(1);}30%{transform:translateY(-24px) scale(1.06,0.94);}55%{transform:translateY(0) scale(0.94,1.08);}75%{transform:translateY(-6px) scale(1.02,0.98);}100%{transform:translateY(0) scale(1);}}
+.jump-tap{animation:petJump .55s ease;}
+.pet-sparkle{position:absolute;left:50%;top:26%;font-size:22px;pointer-events:none;animation:sparkleFloat .9s ease forwards;z-index:5;}
+@keyframes sparkleFloat{0%{opacity:0;transform:translate(-50%,-10px) scale(0.6);}30%{opacity:1;transform:translate(-50%,-45px) scale(1.15);}100%{opacity:0;transform:translate(-50%,-80px) scale(0.9);}}
+
+.nudge{background:var(--clay-blush);border-radius:16px;padding:12px 16px;font-size:13.5px;font-weight:700;color:#6b4a3d;text-align:center;line-height:1.4;}
+.tip-card{background:var(--sky-mist);border-radius:16px;padding:12px 16px;font-size:13px;font-weight:700;color:#3d5964;line-height:1.4;margin-top:10px;text-align:center;}
+.tip-label{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:#3d5964;opacity:0.75;margin-bottom:4px;}
+
+/* buttons */
+.btn{border:none;border-radius:14px;padding:12px 18px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:transform .1s ease;}
+.btn:active{transform:scale(0.96);}
+.btn-primary{background:var(--sprig-green);color:#fff;}
+.btn-soft{background:var(--sky-mist);color:var(--ink-soft);}
+.btn-block{width:100%;}
+.btn-amber{background:var(--alert-amber);color:#5c4416;}
+
+/* tasks */
+.task{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid rgba(74,70,64,0.07);}
+.task:last-child{border-bottom:none;}
+.checkbox{width:24px;height:24px;border-radius:8px;border:2.5px solid var(--sprig-green);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s ease;}
+.checkbox.done{background:var(--sprig-green);}
+.checkbox svg{width:14px;height:14px;opacity:0;transition:opacity .1s;}
+.checkbox.done svg{opacity:1;}
+.task-text{flex:1;font-weight:700;font-size:14.5px;}
+.priority-tag{display:inline-block;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.3px;}
+.priority-tag.overdue{background:var(--clay-blush);color:#6b4a3d;}
+.priority-tag.urgent{background:var(--alert-amber);color:#5c4416;}
+.priority-tag.soon{background:var(--sky-mist);color:#3d5964;}
+.priority-tag.later{background:#EDE7DC;color:var(--ink-faint);}
+.deadline-label{font-size:11px;font-weight:700;color:var(--ink-faint);display:flex;align-items:center;}
+.task-text.done{text-decoration:line-through;color:var(--ink-faint);}
+.add-task-row{display:flex;gap:8px;margin-top:10px;}
+.add-task-row input{flex:1;border:2px solid var(--sky-mist);border-radius:12px;padding:10px 12px;font-family:'Nunito';font-size:14px;background:var(--card);}
+.add-task-row input:focus{outline:none;border-color:var(--sprig-green);}
+
+.timer-card{text-align:center;padding:20px 18px;}
+.timer-icon{font-size:26px;}
+.timer-title{font-family:'Fredoka';font-weight:600;font-size:15px;margin-top:2px;}
+.timer-sub{font-size:12.5px;color:var(--ink-faint);font-weight:700;margin-top:4px;line-height:1.4;}
+.timer-display{font-family:'Fredoka';font-size:44px;font-weight:600;color:var(--ink-soft);margin:10px 0 8px 0;letter-spacing:1px;}
+.preset-row{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;}
+.preset-chip{border:2px solid var(--sky-mist);background:var(--card);border-radius:12px;padding:7px 12px;font-weight:800;font-size:12px;cursor:pointer;color:var(--ink-soft);}
+.preset-chip.selected{border-color:var(--sprig-green);background:rgba(143,191,159,0.15);color:var(--sprig-green-dark);}
+.toast-banner{display:none;position:absolute;bottom:88px;left:16px;right:16px;background:var(--alert-amber);color:#5c4416;padding:13px 16px;border-radius:16px;font-weight:800;font-size:12.5px;box-shadow:0 10px 24px rgba(0,0,0,0.18);cursor:pointer;transform:translateY(140%);transition:transform .35s ease;z-index:40;text-align:center;line-height:1.4;}
+.toast-banner.show{transform:translateY(0);}
+.streak-strip{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:18px;padding:14px 18px;margin-bottom:16px;}
+.streak-strip .num{font-family:'Fredoka';font-size:28px;font-weight:700;color:var(--sprig-green-dark);}
+.streak-strip .lbl{font-size:11px;color:var(--ink-faint);font-weight:700;}
+
+.reflect-box{background:rgba(232,182,90,0.18);border-radius:16px;padding:12px 16px;font-size:13px;font-weight:700;color:#7a5c1e;margin-bottom:12px;line-height:1.4;}
+
+/* pet care */
+.stat-row{display:flex;gap:10px;margin-bottom:14px;}
+.stat{flex:1;background:var(--card);border-radius:16px;padding:12px;text-align:center;}
+.stat .val{font-family:'Fredoka';font-size:20px;font-weight:600;color:var(--sprig-green-dark);}
+.stat .lbl{font-size:10px;color:var(--ink-faint);font-weight:700;text-transform:uppercase;}
+.bar-track{height:8px;background:var(--sky-mist);border-radius:6px;overflow:hidden;margin-top:6px;}
+.bar-fill{height:100%;background:var(--sprig-green);border-radius:6px;transition:width .4s ease;}
+
+.action-row{display:flex;gap:10px;margin:14px 0;}
+.acc-grid{display:flex;gap:10px;flex-wrap:wrap;}
+.acc-item{width:70px;text-align:center;background:var(--card);border-radius:14px;padding:10px 4px;cursor:pointer;border:2px solid transparent;opacity:0.4;}
+.acc-item.unlocked{opacity:1;}
+.acc-item.equipped{border-color:var(--sprig-green);}
+.acc-item .icon{font-size:22px;}
+.acc-item .name{font-size:9.5px;font-weight:700;color:var(--ink-faint);display:block;margin-top:2px;}
+
+/* target practice game */
+.game-card{padding:16px;}
+.game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;}
+.game-stats{display:flex;gap:14px;}
+.game-stats .g-lbl{font-size:9.5px;color:var(--ink-faint);font-weight:700;text-transform:uppercase;}
+.game-stats .g-val{font-family:'Fredoka';font-size:18px;font-weight:600;color:var(--sprig-green-dark);}
+.target-area{position:relative;height:320px;background:linear-gradient(180deg, var(--sky-mist) 0%, var(--bg-cream) 100%);border-radius:16px;overflow:hidden;}
+.game-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-size:13px;font-weight:700;color:var(--ink-faint);}
+.target{position:absolute;width:50px;height:50px;border-radius:50%;background:var(--clay-blush);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 4px 10px rgba(74,70,64,0.15);animation:targetPop .22s ease;border:none;}
+@keyframes targetPop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+.target.popped{animation:targetPopOut .16s ease forwards;}
+@keyframes targetPopOut{to{transform:scale(0);opacity:0;}}
+.game-end{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;background:rgba(251,246,239,0.96);}
+
+/* safe space */
+.mode-toggle{display:flex;background:var(--sky-mist);border-radius:16px;padding:4px;margin-bottom:14px;}
+.mode-btn{flex:1;text-align:center;padding:9px 0;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;color:var(--ink-soft);}
+.mode-btn.active{background:var(--card);}
+textarea{width:100%;border:2px solid var(--sky-mist);border-radius:16px;padding:14px;font-family:'Nunito';font-size:14px;min-height:120px;resize:vertical;background:var(--card);}
+textarea:focus{outline:none;border-color:var(--sprig-green);}
+.prompt-chip{display:inline-block;background:var(--clay-blush);color:#6b4a3d;font-size:12px;font-weight:700;padding:8px 14px;border-radius:14px;margin-top:10px;cursor:pointer;}
+.journal-entry{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:13px;}
+.journal-entry .date{font-size:10px;color:var(--ink-faint);font-weight:700;margin-bottom:3px;}
+.privacy-note{font-size:11px;color:var(--ink-faint);line-height:1.5;background:var(--sky-mist);border-radius:12px;padding:10px 12px;margin-bottom:14px;}
+.crisis-link{font-size:12.5px;font-weight:800;color:#3d5964;background:var(--sky-mist);border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
+.crisis-link-arrow{font-size:10px;}
+.crisis-panel{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(74,70,64,0.06);}
+.crisis-item{font-size:12px;font-weight:600;color:var(--ink-soft);line-height:1.5;padding:6px 0;border-bottom:1px solid rgba(74,70,64,0.06);}
+.crisis-item:last-child{border-bottom:none;}
+.crisis-item strong{color:var(--sprig-green-dark);}
+
+.chat-window{display:flex;flex-direction:column;gap:8px;min-height:260px;}
+.msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:13.5px;line-height:1.4;}
+.msg.user{align-self:flex-end;background:var(--sprig-green);color:#fff;border-bottom-right-radius:4px;}
+.msg.ai{align-self:flex-start;background:var(--card);border-bottom-left-radius:4px;}
+.chat-input-row{display:flex;gap:8px;margin-top:10px;position:sticky;bottom:0;align-items:center;}
+.chat-input-row input{flex:1;border:2px solid var(--sky-mist);border-radius:14px;padding:11px 14px;font-family:'Nunito';font-size:14px;}
+.chat-input-row input:focus{outline:none;border-color:var(--sprig-green);}
+.attach-btn{background:var(--sky-mist);border:none;border-radius:14px;padding:11px 13px;font-size:15px;cursor:pointer;flex-shrink:0;}
+.attach-chip{display:inline-flex;align-items:center;gap:8px;background:var(--sky-mist);padding:6px 10px;border-radius:12px;font-size:11.5px;font-weight:700;margin-bottom:8px;color:var(--ink-soft);}
+.attach-chip .x{cursor:pointer;font-weight:800;color:var(--ink-faint);}
+.msg-attach{font-size:11px;opacity:0.85;margin-bottom:3px;font-weight:800;}
+.task-attach{font-size:10.5px;font-weight:800;color:var(--sprig-green-dark);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px;flex-shrink:0;}
+
+/* calendar */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-nav-btn{background:var(--sky-mist);border:none;border-radius:10px;width:30px;height:30px;font-size:16px;font-weight:800;cursor:pointer;color:var(--ink-soft);}
+.cal-month-label{font-family:'Fredoka';font-weight:600;font-size:14.5px;}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10px;font-weight:800;color:var(--ink-faint);margin-bottom:4px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--bg-cream);position:relative;color:var(--ink-soft);}
+.cal-cell.other-month{background:transparent;cursor:default;color:var(--ink-faint);opacity:0.4;font-weight:600;}
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--sprig-green);}
+.cal-cell.selected{background:var(--sprig-green);color:#fff;}
+.cal-dot{width:5px;height:5px;border-radius:50%;background:var(--clay-blush);margin-top:2px;}
+.cal-cell.selected .cal-dot{background:#fff;}
+
+.cal-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(74,70,64,0.07);}
+.cal-item:last-child{border-bottom:none;}
+.cal-item-type{font-size:16px;flex-shrink:0;}
+.cal-item-body{flex:1;min-width:0;}
+.cal-item-title{font-weight:700;font-size:13.5px;}
+.cal-item-time{color:var(--ink-faint);font-weight:700;font-size:11px;}
+.cal-item-del{cursor:pointer;color:var(--ink-faint);font-weight:800;font-size:13px;flex-shrink:0;padding:2px 4px;}
+
+.add-cal-row{display:flex;gap:8px;align-items:center;}
+.add-cal-row input:not([type]){flex:1;}
+.add-cal-row input,.cal-select{border:2px solid var(--sky-mist);border-radius:12px;padding:9px 10px;font-family:'Nunito';font-size:12.5px;background:var(--card);color:var(--ink-soft);}
+.add-cal-row input:focus,.cal-select:focus{outline:none;border-color:var(--sprig-green);}
+.cal-select{flex-shrink:0;}
+.cal-time-input{flex-shrink:0;width:120px;}
+
+.tt-day-block{margin-bottom:12px;}
+.tt-day-block:last-child{margin-bottom:0;}
+.tt-day-label{font-size:11px;font-weight:800;color:var(--sprig-green-dark);text-transform:uppercase;margin-bottom:4px;letter-spacing:0.3px;}
+.tt-empty{font-size:11.5px;color:var(--ink-faint);font-weight:700;padding:2px 2px 4px 2px;}
+.tt-entry{display:flex;align-items:center;gap:10px;background:var(--bg-cream);border-radius:12px;padding:8px 12px;margin-bottom:4px;font-size:12.5px;font-weight:700;}
+.tt-time{color:var(--sprig-green-dark);font-family:'Fredoka';font-weight:600;min-width:46px;}
+.tt-subject{flex:1;}
+
+/* peers */
+.post{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px;}
+.post .who{font-size:11px;font-weight:800;color:var(--sprig-green-dark);}
+.post .txt{font-size:13.5px;margin-top:3px;}
+
+.event-card{padding:16px;}
+.event-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.tag-pill{background:var(--sky-mist);color:var(--ink-soft);font-size:10px;font-weight:800;padding:3px 10px;border-radius:10px;text-transform:uppercase;letter-spacing:0.4px;}
+.event-type{font-size:11px;font-weight:700;color:var(--ink-faint);}
+.event-title{font-family:'Fredoka';font-weight:600;font-size:15.5px;margin-top:2px;}
+.event-date{font-size:12px;font-weight:700;color:var(--sprig-green-dark);margin-top:2px;}
+.event-desc{font-size:12.5px;color:var(--ink-faint);margin-top:6px;line-height:1.45;}
+
+.post-card{padding:14px;}
+.post-card .who{font-size:11px;font-weight:800;color:var(--sprig-green-dark);}
+.post-card .txt{font-size:13.5px;margin-top:3px;line-height:1.4;}
+.post-actions{display:flex;gap:16px;margin-top:10px;}
+.like-btn, .comment-toggle{font-size:12px;font-weight:800;color:var(--ink-faint);cursor:pointer;user-select:none;}
+.like-btn.liked{color:var(--sprig-green-dark);}
+.comment-section{margin-top:10px;padding-top:10px;border-top:1px solid rgba(74,70,64,0.08);}
+.comment-item{font-size:12.5px;margin-bottom:6px;line-height:1.4;}
+.comment-item .c-who{font-weight:800;color:var(--ink-soft);}
+
+.empty{text-align:center;padding:30px 10px;color:var(--ink-faint);font-size:13px;font-weight:700;}
+.dev-btn{position:fixed;top:6px;right:6px;font-size:9px;background:#ddd;border:none;border-radius:8px;padding:3px 7px;opacity:0.5;cursor:pointer;z-index:50;}
+
+.a11y-btn{background:var(--card);border:2px solid var(--sky-mist);border-radius:10px;padding:5px 9px;font-family:'Fredoka';font-weight:600;font-size:12px;cursor:pointer;color:var(--ink-soft);}
+.a11y-btn.active{background:var(--sprig-green);border-color:var(--sprig-green);color:#fff;}
+.phone.a11y-large .content{zoom:1.16;}
+
+.onboard-overlay{position:absolute;inset:0;background:rgba(74,70,64,0.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;}
+.support-overlay{position:absolute;inset:0;background:rgba(74,70,64,0.55);display:flex;align-items:center;justify-content:center;z-index:65;padding:24px;}
+.support-card{background:var(--bg-cream);border-radius:24px;padding:26px 22px 22px 22px;text-align:center;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.25);max-height:90%;overflow-y:auto;}
+.support-btn{background:var(--sky-mist);border:none;border-radius:12px;height:32px;padding:0 10px;font-size:11.5px;font-weight:800;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;flex-shrink:0;font-family:'Nunito',sans-serif;}
+.onboard-card{background:var(--bg-cream);border-radius:24px;padding:28px 22px;text-align:center;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.25);}
+.onboard-title{font-family:'Fredoka';font-weight:600;font-size:19px;margin-top:8px;}
+.onboard-sub{font-size:12.5px;color:var(--ink-faint);font-weight:700;margin-top:6px;line-height:1.4;}
+.onboard-input{width:100%;border:2px solid var(--sky-mist);border-radius:14px;padding:11px 14px;font-family:'Nunito';font-size:14px;margin-top:14px;text-align:center;background:var(--card);}
+.onboard-input:focus{outline:none;border-color:var(--sprig-green);}
+</style>
+</head>
+<body>
+
+<button class="dev-btn" onclick="simulateNextDay()">+1 day (demo)</button>
+
+<div class="phone" id="phoneFrame">
+  <div class="notch"></div>
+  <div class="topbar">
+    <span class="app-name">sproutly</span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="support-btn" onclick="toggleCrisisPanel()" title="Get support now">💙 <span>Support</span></button>
+      <button class="a11y-btn" id="a11yBtn" onclick="toggleLargeText()" title="Toggle larger text">Aa</button>
+      <div class="streak">🔥 <span id="streakNum">0</span></div>
+      <div class="mini-pet" id="miniPet" onclick="switchTab('pet')"></div>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="toast-banner" id="toastBanner" style="display:none;" onclick="switchTab('tasks'); hideToast();"></div>
+  <div class="tabbar" id="tabbar"></div>
+  <div class="support-overlay" id="supportOverlay" style="display:none;">
+    <div class="support-card">
+      <div style="font-size:32px;">💙</div>
+      <div class="onboard-title">Need support right now?</div>
+      <div class="onboard-sub">You don't have to explain anything first. These are here whenever you need them.</div>
+      <div class="crisis-item" style="text-align:left;margin-top:14px;"><strong>Samaritans of Singapore (SOS)</strong> — 24-hour Hotline: 1767, or CareText via WhatsApp: 9151 1767</div>
+      <div class="crisis-item" style="text-align:left;"><strong>National CARE Hotline</strong> — 1800 202 6868, 24 hours</div>
+      <div class="crisis-item" style="text-align:left;"><strong>TOUCHline</strong> (youth mental health) — 1800 377 2252, Mon–Fri 9am–6pm</div>
+      <div class="crisis-item" style="text-align:left;"><strong>In immediate danger?</strong> Call 995 (ambulance) or 999 (police).</div>
+      <div class="crisis-item" style="text-align:left;">Your school counsellor is also a good next step if this isn't an emergency.</div>
+      <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="toggleCrisisPanel()">Close</button>
+    </div>
+  </div>
+  <div class="onboard-overlay" id="onboardOverlay" style="display:none;">
+    <div class="onboard-card">
+      <div style="font-size:40px;">🌱</div>
+      <div class="onboard-title">Welcome to Sproutly</div>
+      <div class="onboard-sub">Let's meet your companion. What should we call them?</div>
+      <input id="onboardNameInput" class="onboard-input" placeholder="Sprig" maxlength="16">
+      <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="finishOnboarding()">Get started</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script>
+/* ---------------- STATE ---------------- */
+let state = {
+  petName: "Sprig",
+  energy: 62,
+  warmth: 58,
+  coins: 25,
+  totalCompleted: 6,
+  checkinsDone: 4,
+  streak: 3,
+  moodToday: null,
+  dailyTip: null,
+  checkedInToday: false,
+  accessoryEquipped: null,
+  unlocked: {scarf:false, crown:false, hat:false},
+  tasks: [
+    {id:1, text:"Read 10 pages for lit class", done:true},
+    {id:2, text:"Review today's lecture notes", done:false},
+    {id:3, text:"Email professor about extension", done:false},
+  ],
+  journal: [],
+  chat: [
+    {role:"ai", text:"Hey, I'm here if you want to talk through anything. No pressure to have it figured out."}
+  ],
+  events: [
+    {id:1, tag:"Wellness", type:"Talk", title:"Managing Exam Stress", date:"Thu, Jul 16 · 3:00 PM", desc:"A short session on recognizing stress signals before finals and quick ways to reset in the moment."},
+    {id:2, tag:"Community", type:"Drop-in", title:"Peer Support Drop-in", date:"Every Friday · 4:00 PM", desc:"Casual, no-agenda space to sit with other students. Come and go as you like, no sign-up needed."},
+    {id:3, tag:"Wellness", type:"Workshop", title:"Sleep & Focus Workshop", date:"Mon, Jul 20 · 5:30 PM", desc:"Practical sleep habits that actually help with studying, not just generic productivity tips."},
+  ],
+  posts: [
+    {id:1, who:"anon_owl", text:"Got through finals week. Sprig is now a whole Sapling 🌱", likes:4, likedByMe:false, comments:[{who:"anon_fern", text:"So proud of you!"}]},
+    {id:2, who:"anon_fern", text:"Rough day today, but I checked in anyway. Small win.", likes:7, likedByMe:false, comments:[]},
+  ],
+  nextPostId: 3,
+  timer: {
+    duration: 25*60,
+    breakDuration: 5*60,
+    remaining: 25*60,
+    mode: "idle", // idle | focus | break-prompt | break
+    running: false,
+    justFinishedBreak: false,
+    sessionsCompleted: 0,
+  },
+  nextTaskId: 4,
+  calendar: {
+    events: [],
+    timetable: [],
+    nextEventId: 1,
+    nextTtId: 1,
+  },
+  dayCounter: 1,
+  moodHistory: [],
+  totalFocusMinutes: 0,
+  gameBestScore: 0,
+  onboarded: false,
+  largeText: false,
+};
+let currentTab = "home";
+let peerMode = "bulletin"; // bulletin | stories
+let openComments = {};
+let petMode = "care"; // care | game
+let taskMode = "todo"; // todo | calendar
+let calendarMonthOffset = 0;
+let calendarSelectedDate = null; // set on first render to today
+let timerInterval = null;
+let ambientSound = "off"; // off | rain | lofi
+let showCrisisPanel = false;
+
+function stage(){
+  const t = state.totalCompleted + state.checkinsDone;
+  if(t>=30) return "Bloom";
+  if(t>=15) return "Sapling";
+  if(t>=5) return "Sprout";
+  return "Seed";
+}
+function clamp(v){return Math.max(0,Math.min(100,v));}
+
+/* ---------------- PET SVG ---------------- */
+function petSVG(size, animClass){
+  const e = state.energy, w = state.warmth, st = stage();
+  const sleepy = e < 35;
+  const bright = e >= 65;
+  const blush = w >= 45;
+  const bodyScale = st==="Seed"?0.72:st==="Sprout"?0.85:st==="Sapling"?0.95:1.05;
+  const bodyColor = "#8FBF9F";
+
+  let eyes = sleepy
+    ? `<path d="M62 88 Q72 94 82 88" stroke="#4A4640" stroke-width="4" stroke-linecap="round" fill="none"/>
+       <path d="M118 88 Q128 94 138 88" stroke="#4A4640" stroke-width="4" stroke-linecap="round" fill="none"/>`
+    : `<circle cx="72" cy="86" r="9" fill="#4A4640"/><circle cx="75" cy="83" r="2.6" fill="#fff"/>
+       <circle cx="128" cy="86" r="9" fill="#4A4640"/><circle cx="131" cy="83" r="2.6" fill="#fff"/>`;
+
+  let mouth = bright
+    ? `<path d="M85 108 Q100 122 115 108" stroke="#4A4640" stroke-width="4" stroke-linecap="round" fill="none"/>`
+    : `<path d="M88 110 Q100 116 112 110" stroke="#4A4640" stroke-width="4" stroke-linecap="round" fill="none"/>`;
+
+  let cheeks = blush ? `<ellipse cx="58" cy="102" rx="9" ry="6" fill="#F2C4B3" opacity="0.8"/><ellipse cx="142" cy="102" rx="9" ry="6" fill="#F2C4B3" opacity="0.8"/>` : "";
+
+  let leaf = "";
+  if(st==="Sprout"){ leaf = `<path d="M100 24 Q112 8 126 20 Q114 32 100 24Z" fill="#6FA382"/>`; }
+  if(st==="Sapling"){ leaf = `<path d="M100 20 Q116 2 132 16 Q118 30 100 20Z" fill="#6FA382"/><path d="M100 20 Q84 2 68 16 Q82 30 100 20Z" fill="#8FBF9F"/>`; }
+  if(st==="Bloom"){ leaf = `<circle cx="100" cy="14" r="10" fill="#F2C4B3"/><circle cx="88" cy="20" r="8" fill="#E8B65A"/><circle cx="112" cy="20" r="8" fill="#E8B65A"/><circle cx="100" cy="10" r="7" fill="#fff"/>`; }
+
+  let acc = "";
+  if(state.accessoryEquipped==="scarf"){ acc = `<path d="M60 130 Q100 148 140 130 L136 150 Q100 162 64 150Z" fill="#F2C4B3"/>`; }
+  if(state.accessoryEquipped==="crown"){ acc = `<path d="M70 34 L80 16 L92 32 L100 14 L108 32 L120 16 L130 34Z" fill="#6FA382" stroke="#4d7d5f" stroke-width="2"/>`; }
+  if(state.accessoryEquipped==="hat"){ acc = `<path d="M62 40 Q100 4 138 40Z" fill="#C9DDE4"/><rect x="58" y="38" width="84" height="10" rx="5" fill="#a9c9d4"/>`; }
+
+  return `<svg viewBox="0 0 200 190" class="${animClass||''}">
+    <ellipse cx="100" cy="170" rx="48" ry="8" fill="#4A4640" opacity="0.08"/>
+    <g transform="translate(100,100) scale(${bodyScale}) translate(-100,-95)">
+      <path d="M100 30 C150 30 168 78 160 118 C154 152 130 170 100 170 C70 170 46 152 40 118 C32 78 50 30 100 30Z" fill="${bodyColor}"/>
+      ${leaf}
+      ${eyes}
+      ${mouth}
+      ${cheeks}
+      ${acc}
+    </g>
+  </svg>`;
+}
+
+/* ---------------- NUDGE LOGIC ---------------- */
+function coachNudge(){
+  if(state.streak>=3 && state.checkedInToday) return `You've checked in ${state.streak} days running — ${state.petName}'s noticed.`;
+  if(!state.checkedInToday && state.streak===0) return `${state.petName}'s had a quiet stretch. One small thing today would go a long way.`;
+  if(state.energy<35) return `${state.petName} seems tired lately. Even a tiny task can turn that around.`;
+  if(state.tasks.filter(t=>!t.done).length===0) return `Every task's done today. ${state.petName} is stretching, feeling good.`;
+  return `You've got ${state.tasks.filter(t=>!t.done).length} thing(s) left today. ${state.petName}'s rooting for you.`;
+}
+
+/* ---------------- RENDER SHELL ---------------- */
+function renderShell(){
+  document.getElementById("streakNum").textContent = state.streak;
+  document.getElementById("miniPet").innerHTML = petSVG(38,"");
+  const tabs = [
+    {id:"home", label:"Home", icon:`<path d="M4 11 L12 4 L20 11 M6 10 V19 H18 V10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`},
+    {id:"tasks", label:"Tasks", icon:`<rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 12 L11 15 L16 9" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`},
+    {id:"pet", label:"Game", icon:`<circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/>`},
+    {id:"safe", label:"Safe Space", icon:`<path d="M12 4 C17 4 20 8 20 12 C20 17 16 20 12 20 C8 20 4 17 4 12 C4 8 7 4 12 4Z" stroke="currentColor" stroke-width="2" fill="none"/>`},
+    {id:"peers", label:"Peers", icon:`<circle cx="9" cy="10" r="3" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="16" cy="10" r="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4 19 C4 15 6.5 14 9 14 C11.5 14 14 15 14 19" stroke="currentColor" stroke-width="2" fill="none"/>`},
+  ];
+  document.getElementById("tabbar").innerHTML = tabs.map(t=>`
+    <button class="tab ${currentTab===t.id?'active':''}" onclick="switchTab('${t.id}')">
+      <svg viewBox="0 0 24 24">${t.icon}</svg>
+      <span>${t.label}</span>
+    </button>`).join("");
+}
+
+function switchTab(id){
+  if(currentTab==="pet" && id!=="pet") stopGame();
+  currentTab=id;
+  render();
+}
+
+function render(){
+  renderShell();
+  const c = document.getElementById("content");
+  if(currentTab==="home") c.innerHTML = renderHome();
+  if(currentTab==="tasks") c.innerHTML = renderTasks();
+  if(currentTab==="pet") c.innerHTML = renderPetCare();
+  if(currentTab==="safe") c.innerHTML = renderSafe();
+  if(currentTab==="peers") c.innerHTML = renderPeers();
+  if(currentTab==="safe") afterSafeRender();
+}
+
+/* ---------------- ONBOARDING ---------------- */
+function initOnboarding(){
+  const overlay = document.getElementById("onboardOverlay");
+  if(!overlay) return;
+  overlay.style.display = state.onboarded ? "none" : "flex";
+}
+function finishOnboarding(){
+  const inp = document.getElementById("onboardNameInput");
+  const name = inp && inp.value.trim();
+  if(name) state.petName = name;
+  state.onboarded = true;
+  document.getElementById("onboardOverlay").style.display = "none";
+  render();
+}
+
+/* ---------------- ACCESSIBILITY ---------------- */
+function toggleLargeText(){
+  state.largeText = !state.largeText;
+  const frame = document.getElementById("phoneFrame");
+  const btn = document.getElementById("a11yBtn");
+  if(frame) frame.classList.toggle("a11y-large", state.largeText);
+  if(btn) btn.classList.toggle("active", state.largeText);
+}
+
+/* ---------------- HOME ---------------- */
+function renderHome(){
+  const moods = [
+    {v:"rough", e:"😔", l:"Rough"},
+    {v:"low", e:"😕", l:"Low"},
+    {v:"okay", e:"🙂", l:"Okay"},
+    {v:"good", e:"😊", l:"Good"},
+    {v:"great", e:"🤩", l:"Great"},
+  ];
+  const remaining = state.tasks.filter(t=>!t.done).length;
+  const nextItem = nextUpcomingItem();
+  return `
+    <div class="welcome-text">Welcome back 👋</div>
+    ${nextItem ? `
+    <div class="glance-strip" onclick="switchTab('tasks')">
+      <span class="glance-icon">${nextItem.icon}</span>
+      <div><div class="glance-label">Up next</div><div class="glance-title">${nextItem.label}</div></div>
+      <div class="glance-sub">${nextItem.sub}</div>
+    </div>` : ""}
+    <div class="section-title">How are you today?</div>
+    <div class="mood-row">
+      ${moods.map(m=>`<div class="mood-btn ${state.moodToday===m.v?'selected':''} ${state.checkedInToday?'locked':''}" onclick="${state.checkedInToday?'':`checkInMood('${m.v}')`}">
+        <span class="emoji">${m.e}</span><span class="label">${m.l}</span>
+      </div>`).join("")}
+    </div>
+    ${state.checkedInToday ? `<div class="mood-locked-note">Today's check-in is locked in — see you tomorrow 🌱</div>` : ""}
+    ${state.moodToday && state.dailyTip ? `<div class="tip-card"><div class="tip-label">Today's tip</div>${state.dailyTip}</div>` : ""}
+
+    <div class="pet-hero" onclick="tapPet(this)">
+      ${petSVG(180,"breathing")}
+      <div class="pet-name">${state.petName}</div>
+      <div class="pet-stage">${stage()}</div>
+    </div>
+
+    <div class="nudge">${coachNudge()}</div>
+
+    <div class="streak-strip" style="margin-top:16px;" onclick="switchTab('tasks')">
+      <div><div class="num">${state.streak}</div><div class="lbl">DAY STREAK</div></div>
+      <div style="width:1px;background:#eee;height:32px;"></div>
+      <div><div class="num">${remaining}</div><div class="lbl">TASKS LEFT TODAY</div></div>
+    </div>
+
+    <div class="section-title">Your Week</div>
+    <div class="card">
+      ${renderMoodHistoryStrip()}
+      <div class="stat-row" style="margin-top:12px;">
+        <div class="stat"><div class="val">${state.checkinsDone}</div><div class="lbl">Check-ins</div></div>
+        <div class="stat"><div class="val">${state.totalCompleted}</div><div class="lbl">Tasks done</div></div>
+        <div class="stat"><div class="val">${Math.round(state.totalFocusMinutes)}</div><div class="lbl">Focus min</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function nextUpcomingItem(){
+  const now = new Date();
+  const nowTime = pad2(now.getHours())+":"+pad2(now.getMinutes());
+  const todayAbbr = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][now.getDay()];
+  const todayK = todayKey();
+  const candidates = [];
+
+  state.calendar.timetable.forEach(t=>{
+    if(t.day===todayAbbr && t.time && t.time>=nowTime){
+      candidates.push({sortKey:`${todayK} ${t.time}`, label:t.subject, sub:`Today · ${t.time}`, icon:"📚"});
+    }
+  });
+  state.calendar.events.forEach(e=>{
+    if(e.dateKey>todayK || (e.dateKey===todayK && (!e.time || e.time>=nowTime))){
+      const dayLabel = e.dateKey===todayK ? "Today" : new Date(e.dateKey+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+      candidates.push({sortKey:`${e.dateKey} ${e.time||"23:59"}`, label:e.title, sub:`${dayLabel}${e.time?` · ${e.time}`:""}`, icon: e.type==="file"?"📎":e.type==="event"?"📌":"✅"});
+    }
+  });
+  state.tasks.forEach(t=>{
+    if(t.deadline && !t.done && t.deadline>=todayK){
+      const dayLabel = t.deadline===todayK ? "Today" : new Date(t.deadline+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+      candidates.push({sortKey:`${t.deadline} 23:59`, label:t.text, sub:`Due ${dayLabel}`, icon:"✅"});
+    }
+  });
+
+  if(candidates.length===0) return null;
+  candidates.sort((a,b)=>a.sortKey.localeCompare(b.sortKey));
+  return candidates[0];
+}
+
+function renderMoodHistoryStrip(){
+  const moodEmoji = {rough:"😔",low:"😕",okay:"🙂",good:"😊",great:"🤩"};
+  const last = state.moodHistory.slice(-7);
+  if(last.length===0) return `<div class="empty" style="padding:10px 0;">No check-ins logged yet — tap a mood above to start.</div>`;
+  return `<div class="mood-history-row">${last.map(m=>`<div class="mh-chip" title="Day ${m.day}">${moodEmoji[m.mood]||"🙂"}</div>`).join("")}</div>`;
+}
+
+const moodTips = {
+  rough: [
+    "Rough days don't need fixing today — just getting through is enough.",
+    "One small task, nothing more. That still counts as a full win on a day like this.",
+    "It's okay to do less today. Sprig isn't going anywhere.",
+    "Be as kind to yourself right now as you would be to a friend having a hard day.",
+  ],
+  low: [
+    "Low energy is real — try just one tiny task to build a little momentum.",
+    "You don't have to feel motivated to take one small step.",
+    "A short walk or a stretch break might help more than pushing through.",
+    "Pick the smallest possible version of your next task. That's plenty for now.",
+  ],
+  okay: [
+    "Steady is good. Pick one task and keep the momentum going.",
+    "An 'okay' day is still a fine day to knock out something small on your list.",
+    "Not every day needs to be great to be productive.",
+    "Consistency beats intensity — showing up today already matters.",
+  ],
+  good: [
+    "You're in a good spot — a great time to tackle something you've been putting off.",
+    "Ride this energy into your hardest task today.",
+    "Good days are for progress. What's one thing you can finish?",
+    "This is a solid moment to knock out something that needs focus.",
+  ],
+  great: [
+    "Great energy! This is a perfect time to get ahead on something.",
+    "Use today's momentum — future-you will thank you.",
+    "You're on a roll. Keep it going, but don't forget to rest later too.",
+    "Days like this are great for starting something bigger.",
+  ],
+};
+
+function checkInMood(v){
+  if(state.checkedInToday) return; // already checked in today — locked in
+  const beforeStage = stage();
+  state.checkinsDone++;
+  state.warmth = clamp(state.warmth+8);
+  state.streak++;
+  state.checkedInToday = true;
+  state.coins += 5;
+  if([7,14,30,60].includes(state.streak)){
+    showToast(`🔥 ${state.streak}-day streak! ${state.petName} is glowing.`);
+  }
+  state.moodToday = v;
+  const existingEntry = state.moodHistory.find(m=>m.day===state.dayCounter);
+  if(existingEntry) existingEntry.mood = v;
+  else state.moodHistory.push({day: state.dayCounter, mood: v});
+  const tips = moodTips[v] || [];
+  state.dailyTip = tips.length ? tips[Math.floor(Math.random()*tips.length)] : null;
+  if(stage()!==beforeStage) celebrateStageUp(stage());
+  render();
+  bounceMini();
+}
+
+function celebrateStageUp(newStage){
+  showToast(`🎉 ${state.petName} grew into a ${newStage}!`);
+}
+
+/* ---------------- TASKS ---------------- */
+function renderTasks(){
+  return `
+    <div class="mode-toggle">
+      <div class="mode-btn ${taskMode==='todo'?'active':''}" onclick="setTaskMode('todo')">To-Do</div>
+      <div class="mode-btn ${taskMode==='calendar'?'active':''}" onclick="setTaskMode('calendar')">Calendar</div>
+    </div>
+    ${taskMode==='todo' ? renderTodoContent() : renderCalendarContent()}
+  `;
+}
+function setTaskMode(m){ taskMode = m; render(); }
+
+function priorityInfo(deadline){
+  if(!deadline) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(deadline+"T00:00:00");
+  const diffDays = Math.round((due - today) / 86400000);
+  if(diffDays < 0) return {label:"Overdue", cls:"overdue"};
+  if(diffDays === 0) return {label:"Due today", cls:"urgent"};
+  if(diffDays === 1) return {label:"Due tomorrow", cls:"urgent"};
+  if(diffDays <= 3) return {label:"Due soon", cls:"soon"};
+  return {label: due.toLocaleDateString(undefined,{month:"short", day:"numeric"}), cls:"later"};
+}
+
+function renderTodoContent(){
+  const remaining = state.tasks.filter(t=>!t.done).length;
+  const missedRecently = state.energy < 40;
+  const sortedTasks = [...state.tasks].sort((a,b)=>{
+    if(!a.deadline && !b.deadline) return 0;
+    if(!a.deadline) return 1;
+    if(!b.deadline) return -1;
+    return a.deadline.localeCompare(b.deadline);
+  });
+  return `
+    <div class="section-title">Study timer</div>
+    ${renderTimerCard()}
+
+    <div class="section-title">Today</div>
+    ${missedRecently ? `<div class="reflect-box">${state.petName}'s had a quiet few days. Adding one small thing helps more than it seems. <span style="text-decoration:underline;cursor:pointer;" onclick="quickAddSmallTask()">Add a small task →</span></div>` : ""}
+    <div class="card" style="padding:6px 14px;">
+      ${sortedTasks.length===0 ? `<div class="empty">Nothing here yet — add your first task.</div>` :
+        sortedTasks.map(t=>{
+          const pr = priorityInfo(t.deadline);
+          return `
+        <div class="task">
+          <div class="checkbox ${t.done?'done':''}" onclick="toggleTask(${t.id})">
+            <svg viewBox="0 0 24 24"><path d="M4 12 L10 18 L20 6" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="task-text ${t.done?'done':''}">${t.text}${t.recurring?`<span class="priority-tag later" title="Repeats weekly">🔁 Weekly</span>`:""}${pr ? `<span class="priority-tag ${pr.cls}">${pr.label}</span>` : ""}</div>
+          ${t.attachmentName ? `<a class="task-attach" href="${t.attachmentUrl}" download="${t.attachmentName}" onclick="event.stopPropagation()" title="${t.attachmentName}">📎 ${t.attachmentName}</a>` : ""}
+        </div>`;}).join("")}
+    </div>
+    <div id="taskAttachmentPreview"></div>
+    <div class="add-task-row">
+      <input type="file" id="taskFileInput" style="display:none;" onchange="handleTaskFileSelect(event)">
+      <button class="attach-btn" onclick="document.getElementById('taskFileInput').click()" title="Attach a file to this task">📎</button>
+      <input id="newTaskInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()">
+      <button class="btn btn-primary" onclick="addTask()">Add</button>
+    </div>
+    <div class="add-task-row" style="margin-top:6px;">
+      <label class="deadline-label" for="newTaskDeadline">Deadline (optional):</label>
+      <input type="date" id="newTaskDeadline" class="cal-time-input" style="width:140px;">
+    </div>
+    <label class="recurring-label"><input type="checkbox" id="newTaskRecurring"> 🔁 Repeat weekly</label>
+
+    <div class="section-title">Your progress</div>
+    <div class="stat-row">
+      <div class="stat"><div class="val">${state.streak}</div><div class="lbl">Streak</div></div>
+      <div class="stat"><div class="val">${state.totalCompleted}</div><div class="lbl">Completed</div></div>
+      <div class="stat"><div class="val">${remaining}</div><div class="lbl">Left today</div></div>
+    </div>
+  `;
+}
+function toggleTask(id){
+  const t = state.tasks.find(x=>x.id===id);
+  const beforeStage = stage();
+  t.done = !t.done;
+  if(t.done){ state.totalCompleted++; state.energy = clamp(state.energy+10); state.coins+=5; bounceMini(); }
+  else { state.totalCompleted = Math.max(0,state.totalCompleted-1); state.energy = clamp(state.energy-6); }
+  if(stage()!==beforeStage) celebrateStageUp(stage());
+  render();
+}
+let pendingTaskAttachment = null;
+
+function handleTaskFileSelect(e){
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(){
+    pendingTaskAttachment = {name: file.name, dataUrl: reader.result};
+    renderTaskAttachmentPreview();
+  };
+  reader.readAsDataURL(file);
+}
+function renderTaskAttachmentPreview(){
+  const wrap = document.getElementById("taskAttachmentPreview");
+  if(!wrap) return;
+  wrap.innerHTML = pendingTaskAttachment
+    ? `<div class="attach-chip">📎 ${pendingTaskAttachment.name} <span class="x" onclick="clearTaskAttachment()">✕</span></div>`
+    : "";
+}
+function clearTaskAttachment(){
+  pendingTaskAttachment = null;
+  renderTaskAttachmentPreview();
+}
+
+function addTask(){
+  const inp = document.getElementById("newTaskInput");
+  const deadlineInp = document.getElementById("newTaskDeadline");
+  const recurringInp = document.getElementById("newTaskRecurring");
+  if(!inp.value.trim()) return;
+  state.tasks.push({
+    id: state.nextTaskId++,
+    text: inp.value.trim(),
+    done:false,
+    deadline: deadlineInp && deadlineInp.value ? deadlineInp.value : null,
+    recurring: recurringInp ? recurringInp.checked : false,
+    attachmentName: pendingTaskAttachment ? pendingTaskAttachment.name : null,
+    attachmentUrl: pendingTaskAttachment ? pendingTaskAttachment.dataUrl : null,
+  });
+  inp.value="";
+  if(deadlineInp) deadlineInp.value="";
+  if(recurringInp) recurringInp.checked = false;
+  pendingTaskAttachment = null;
+  render();
+}
+function quickAddSmallTask(){
+  state.tasks.push({id: state.nextTaskId++, text: "One small thing", done:false});
+  render();
+}
+
+/* ---------------- CALENDAR ---------------- */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function dateKeyOf(y,m,d){ return `${y}-${pad2(m+1)}-${pad2(d)}`; }
+function todayKey(){ const t=new Date(); return dateKeyOf(t.getFullYear(), t.getMonth(), t.getDate()); }
+if(!calendarSelectedDate) calendarSelectedDate = todayKey();
+
+function renderCalendarContent(){
+  return `
+    ${renderCalendarGrid()}
+    ${renderCalendarDayPanel()}
+    ${renderTimetable()}
+  `;
+}
+
+function renderCalendarGrid(){
+  const base = new Date();
+  const viewDate = new Date(base.getFullYear(), base.getMonth()+calendarMonthOffset, 1);
+  const y = viewDate.getFullYear(), m = viewDate.getMonth();
+  const firstDay = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const prevMonthDays = new Date(y,m,0).getDate();
+  const monthLabel = viewDate.toLocaleDateString(undefined,{month:"long", year:"numeric"});
+  let cells = "";
+
+  // leading days from the previous month, shown faded and non-interactive
+  for(let i=0;i<firstDay;i++){
+    const d = prevMonthDays - firstDay + 1 + i;
+    cells += `<div class="cal-cell other-month"><span>${d}</span></div>`;
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const key = dateKeyOf(y,m,d);
+    const hasItems = state.calendar.events.some(e=>e.dateKey===key);
+    const isToday = key===todayKey();
+    const isSelected = key===calendarSelectedDate;
+    cells += `<div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''}" onclick="selectCalendarDate('${key}')">
+      <span>${d}</span>${hasItems?'<div class="cal-dot"></div>':''}
+    </div>`;
+  }
+
+  // trailing days from the next month, so the grid always ends on a complete row
+  const totalSoFar = firstDay + daysInMonth;
+  const trailing = (7 - (totalSoFar % 7)) % 7;
+  for(let i=1;i<=trailing;i++){
+    cells += `<div class="cal-cell other-month"><span>${i}</span></div>`;
+  }
+
+  return `
+    <div class="section-title">Calendar</div>
+    <div class="card">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="changeCalendarMonth(-1)">‹</button>
+        <div class="cal-month-label">${monthLabel}</div>
+        <button class="cal-nav-btn" onclick="changeCalendarMonth(1)">›</button>
+      </div>
+      <div class="cal-weekdays">${["S","M","T","W","T","F","S"].map(d=>`<div>${d}</div>`).join("")}</div>
+      <div class="cal-grid">${cells}</div>
+    </div>
+  `;
+}
+function changeCalendarMonth(delta){ calendarMonthOffset += delta; render(); }
+function selectCalendarDate(key){ calendarSelectedDate = key; render(); }
+
+function renderCalendarDayPanel(){
+  const items = state.calendar.events.filter(e=>e.dateKey===calendarSelectedDate)
+    .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+  const label = new Date(calendarSelectedDate+"T00:00:00").toLocaleDateString(undefined,{weekday:"long", month:"short", day:"numeric"});
+  return `
+    <div class="section-title">${label}</div>
+    <div class="card" style="padding:6px 14px;">
+      ${items.length===0 ? `<div class="empty">Nothing added for this day yet.</div>` :
+        items.map(e=>`
+        <div class="cal-item">
+          <div class="cal-item-type">${e.type==="file"?"📎":e.type==="event"?"📌":"✅"}</div>
+          <div class="cal-item-body">
+            <div class="cal-item-title">${e.title}${e.time?` <span class="cal-item-time">· ${e.time}</span>`:""}</div>
+            ${e.attachmentName?`<a class="task-attach" href="${e.attachmentUrl}" download="${e.attachmentName}" onclick="event.stopPropagation()">📎 ${e.attachmentName}</a>`:""}
+          </div>
+          <span class="cal-item-del" onclick="deleteCalendarEvent(${e.id})">✕</span>
+        </div>`).join("")}
+    </div>
+
+    <div class="add-cal-row">
+      <select id="calType" class="cal-select">
+        <option value="task">Task</option>
+        <option value="event">Event/Exam</option>
+      </select>
+      <input id="calTitleInput" placeholder="Add something for this day..." onkeydown="if(event.key==='Enter')addCalendarEvent()">
+    </div>
+    <div class="add-cal-row" style="margin-top:6px;">
+      <label class="deadline-label" for="calTimeInput">Time (optional):</label>
+      <input id="calTimeInput" type="time" class="cal-time-input">
+    </div>
+    <button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="addCalendarEvent()">Add to this day</button>
+
+    <div class="section-title">Upload a file to this day</div>
+    <div class="card" style="padding:14px;">
+      <input type="file" id="calFileInput" style="display:none;" onchange="handleCalendarFileSelect(event)">
+      <button class="btn btn-soft btn-block" onclick="document.getElementById('calFileInput').click()">📎 Upload file (syllabus, timetable photo, etc.)</button>
+      <div style="font-size:11px;color:var(--ink-faint);font-weight:700;margin-top:8px;text-align:center;">Files upload straight onto the selected day above.</div>
+    </div>
+  `;
+}
+function addCalendarEvent(){
+  const type = document.getElementById("calType").value;
+  const titleInput = document.getElementById("calTitleInput");
+  const timeInput = document.getElementById("calTimeInput");
+  if(!titleInput.value.trim()) return;
+  state.calendar.events.push({
+    id: state.calendar.nextEventId++,
+    dateKey: calendarSelectedDate,
+    title: titleInput.value.trim(),
+    type,
+    time: timeInput.value || "",
+  });
+  titleInput.value = "";
+  timeInput.value = "";
+  render();
+}
+function deleteCalendarEvent(id){
+  state.calendar.events = state.calendar.events.filter(e=>e.id!==id);
+  render();
+}
+function handleCalendarFileSelect(e){
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(){
+    state.calendar.events.push({
+      id: state.calendar.nextEventId++,
+      dateKey: calendarSelectedDate,
+      title: file.name,
+      type: "file",
+      time: "",
+      attachmentName: file.name,
+      attachmentUrl: reader.result,
+    });
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderTimetable(){
+  const days = ["Mon","Tue","Wed","Thu","Fri"];
+  return `
+    <div class="section-title">Weekly School Timetable</div>
+    <div class="card">
+      ${days.map(day=>{
+        const entries = state.calendar.timetable.filter(t=>t.day===day).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+        return `
+        <div class="tt-day-block">
+          <div class="tt-day-label">${day}</div>
+          ${entries.length===0 ? `<div class="tt-empty">No classes added</div>` :
+            entries.map(t=>`
+            <div class="tt-entry">
+              <span class="tt-time">${t.time||"--:--"}</span>
+              <span class="tt-subject">${t.subject}</span>
+              <span class="cal-item-del" onclick="deleteTimetableEntry(${t.id})">✕</span>
+            </div>`).join("")}
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="add-cal-row" style="margin-top:10px;">
+      <select id="ttDay" class="cal-select">
+        ${days.map(d=>`<option value="${d}">${d}</option>`).join("")}
+      </select>
+      <input id="ttSubject" placeholder="Subject / class name" onkeydown="if(event.key==='Enter')addTimetableEntry()">
+    </div>
+    <div class="add-cal-row" style="margin-top:6px;">
+      <label class="deadline-label" for="ttTime">Time:</label>
+      <input id="ttTime" type="time" class="cal-time-input">
+    </div>
+    <button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="addTimetableEntry()">Add to timetable</button>
+  `;
+}
+function addTimetableEntry(){
+  const day = document.getElementById("ttDay").value;
+  const subj = document.getElementById("ttSubject");
+  const time = document.getElementById("ttTime");
+  if(!subj.value.trim()) return;
+  state.calendar.timetable.push({id: state.calendar.nextTtId++, day, subject: subj.value.trim(), time: time.value || ""});
+  subj.value = "";
+  time.value = "";
+  render();
+}
+function deleteTimetableEntry(id){
+  state.calendar.timetable = state.calendar.timetable.filter(t=>t.id!==id);
+  render();
+}
+
+/* ---------------- STUDY TIMER ---------------- */
+function formatTime(s){
+  const m = Math.floor(s/60), sec = s%60;
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+function renderTimerCard(){
+  const t = state.timer;
+  const presets = [
+    {label:"30 sec (test)", seconds:30},
+    {label:"15 min", seconds:15*60},
+    {label:"25 min", seconds:25*60},
+    {label:"50 min", seconds:50*60},
+  ];
+
+  if(t.mode==="break-prompt"){
+    return `
+      <div class="card timer-card">
+        <div class="timer-icon">🌿</div>
+        <div class="timer-title">Nice focus session!</div>
+        <div class="timer-sub">You studied for ${Math.round(t.duration/60)} min. A short break helps it stick — ${state.petName} could use a stretch too.</div>
+        <div class="action-row">
+          <button class="btn btn-primary" style="flex:1" onclick="startBreak()">Start 5-min break</button>
+          <button class="btn btn-soft" style="flex:1" onclick="skipBreakKeepStudying()">Keep going (+10 min)</button>
+        </div>
+      </div>`;
+  }
+  if(t.mode==="break"){
+    return `
+      <div class="card timer-card">
+        <div class="timer-icon">☕</div>
+        <div class="timer-title">On a break</div>
+        <div class="timer-display" id="timerDisplay">${formatTime(t.remaining)}</div>
+        <div class="bar-track"><div class="bar-fill" id="timerBarFill" style="width:${100-(t.remaining/t.breakDuration*100)}%;background:var(--clay-blush)"></div></div>
+        <div class="action-row">
+          <button class="btn btn-soft btn-block" onclick="endBreakEarly()">End break, back to studying</button>
+        </div>
+      </div>`;
+  }
+  // idle or focus
+  const heading = (t.mode==="focus" && t.running) ? "Studying..." : (t.mode==="focus" && !t.running) ? "Paused" : "Study timer";
+  return `
+    <div class="card timer-card">
+      <div class="timer-icon">📚</div>
+      <div class="timer-title">${heading}</div>
+      ${t.justFinishedBreak && t.mode==="idle" ? `<div class="timer-sub">Break's over — ready for another round?</div>` : ""}
+      <div class="timer-display" id="timerDisplay">${formatTime(t.remaining)}</div>
+      <div class="bar-track"><div class="bar-fill" id="timerBarFill" style="width:${100-(t.remaining/t.duration*100)}%"></div></div>
+      ${t.mode==="idle" ? `
+      <div class="preset-row">
+        ${presets.map(p=>`<button class="preset-chip ${t.duration===p.seconds?'selected':''}" onclick="setFocusLength(${p.seconds})">${p.label}</button>`).join("")}
+      </div>` : ""}
+      <div class="action-row">
+        ${t.running
+          ? `<button class="btn btn-soft btn-block" onclick="pauseTimer()">Pause</button>`
+          : `<button class="btn btn-primary btn-block" onclick="startTimer()">${t.mode==="focus" ? "Resume" : "Start studying"}</button>`
+        }
+      </div>
+      ${t.mode==="focus" ? `<div style="text-align:center;margin-top:6px;"><span style="font-size:11px;color:var(--ink-faint);font-weight:700;cursor:pointer;text-decoration:underline;" onclick="resetTimer()">Reset</span></div>` : ""}
+      <button class="btn btn-soft btn-block" style="margin-top:10px;" onclick="cycleAmbientSound()">${ambientLabel()}</button>
+    </div>
+  `;
+}
+function ambientLabel(){
+  const labels = {off:"🔇 Ambient sound: off", rain:"🌧️ Rain sound — tap to change", lofi:"🎵 Lo-fi loop — tap to change"};
+  return labels[ambientSound];
+}
+
+let toneNoise = null;
+let toneLoop = null;
+let toneLoopSynth = null;
+
+async function cycleAmbientSound(){
+  const order = ["off","rain","lofi"];
+  const next = order[(order.indexOf(ambientSound)+1) % order.length];
+  stopAmbientSound();
+  ambientSound = next;
+  render();
+  if(ambientSound === "off") return;
+  try{
+    if(typeof Tone === "undefined"){
+      showToast("Ambient sound couldn't load — check your connection and try again.");
+      ambientSound = "off";
+      render();
+      return;
+    }
+    await Tone.start();
+    if(ambientSound === "rain") startRainSound();
+    else if(ambientSound === "lofi") startLofiSound();
+  }catch(err){
+    console.error("Ambient sound error:", err);
+    showToast("Couldn't start ambient sound on this device.");
+    ambientSound = "off";
+    render();
+  }
+}
+
+function startRainSound(){
+  const filter = new Tone.Filter(650, "lowpass").toDestination();
+  toneNoise = new Tone.Noise({type:"pink", volume:-20}).connect(filter);
+  toneNoise.start();
+}
+
+function startLofiSound(){
+  toneLoopSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator:{type:"sine"},
+    envelope:{attack:0.9, decay:0.4, sustain:0.6, release:2.5},
+    volume:-16,
+  }).toDestination();
+  const chords = [["C4","E4","G4"], ["A3","C4","E4"], ["F3","A3","C4"], ["G3","B3","D4"]];
+  let i = 0;
+  toneLoop = new Tone.Loop((time)=>{
+    toneLoopSynth.triggerAttackRelease(chords[i % chords.length], "2m", time);
+    i++;
+  }, "2m").start(0);
+  Tone.Transport.start();
+}
+
+function stopAmbientSound(){
+  if(toneNoise){ toneNoise.stop(); toneNoise.dispose(); toneNoise = null; }
+  if(toneLoop){ toneLoop.stop(); toneLoop.dispose(); toneLoop = null; }
+  if(toneLoopSynth){ toneLoopSynth.dispose(); toneLoopSynth = null; }
+  if(typeof Tone !== "undefined" && Tone.Transport) Tone.Transport.stop();
+}
+
+function setFocusLength(seconds){
+  if(state.timer.mode!=="idle") return;
+  state.timer.duration = seconds;
+  state.timer.remaining = seconds;
+  render();
+}
+
+function tickTimer(){
+  state.timer.remaining--;
+  if(state.timer.remaining <= 0){
+    clearInterval(timerInterval); timerInterval = null;
+    if(state.timer.mode==="focus") onFocusComplete();
+    else if(state.timer.mode==="break") onBreakComplete();
+    return;
+  }
+  updateTimerDOM();
+}
+
+function updateTimerDOM(){
+  const el = document.getElementById("timerDisplay");
+  if(!el) return; // user's on a different tab, that's fine
+  el.textContent = formatTime(state.timer.remaining);
+  const bar = document.getElementById("timerBarFill");
+  if(bar){
+    const total = state.timer.mode==="break" ? state.timer.breakDuration : state.timer.duration;
+    bar.style.width = (100 - (state.timer.remaining/total*100)) + "%";
+  }
+}
+
+function startTimer(){
+  if(state.timer.mode==="idle"){
+    state.timer.mode = "focus";
+    state.timer.remaining = state.timer.duration;
+  }
+  state.timer.justFinishedBreak = false;
+  state.timer.running = true;
+  if(!timerInterval) timerInterval = setInterval(tickTimer, 1000);
+  render();
+}
+
+function pauseTimer(){
+  state.timer.running = false;
+  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+  render();
+}
+
+function resetTimer(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+  state.timer.mode = "idle";
+  state.timer.running = false;
+  state.timer.remaining = state.timer.duration;
+  render();
+}
+
+function onFocusComplete(){
+  state.timer.mode = "break-prompt";
+  state.timer.running = false;
+  state.timer.sessionsCompleted++;
+  state.totalFocusMinutes += state.timer.duration / 60;
+  state.energy = clamp(state.energy+12);
+  state.coins += 8;
+  bounceMini();
+  showToast(`⏰ Focus session done — take a break! ${state.petName} thinks you've earned it.`);
+  render();
+}
+
+function startBreak(){
+  state.timer.mode = "break";
+  state.timer.remaining = state.timer.breakDuration;
+  state.timer.running = true;
+  timerInterval = setInterval(tickTimer, 1000);
+  render();
+}
+
+function skipBreakKeepStudying(){
+  state.timer.mode = "focus";
+  state.timer.duration = 10*60;
+  state.timer.remaining = 10*60;
+  state.timer.running = true;
+  timerInterval = setInterval(tickTimer, 1000);
+  render();
+}
+
+function endBreakEarly(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+  finishBreak();
+}
+
+function onBreakComplete(){
+  finishBreak();
+  showToast(`Break's over — ready for another round when you are.`);
+}
+
+function finishBreak(){
+  state.timer.mode = "idle";
+  state.timer.remaining = state.timer.duration;
+  state.timer.running = false;
+  state.timer.justFinishedBreak = true;
+  render();
+}
+
+function showToast(msg){
+  const el = document.getElementById("toastBanner");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.display = "block";
+  requestAnimationFrame(()=> el.classList.add("show"));
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(hideToast, 6000);
+}
+function hideToast(){
+  const el = document.getElementById("toastBanner");
+  if(!el) return;
+  el.classList.remove("show");
+  clearTimeout(window._toastHideTimer);
+  window._toastHideTimer = setTimeout(()=>{ el.style.display = "none"; }, 350);
+}
+
+/* ---------------- PET CARE ---------------- */
+function renderPetCare(){
+  return `
+    <div class="mode-toggle">
+      <div class="mode-btn ${petMode==='care'?'active':''}" onclick="setPetMode('care')">Pet Care</div>
+      <div class="mode-btn ${petMode==='game'?'active':''}" onclick="setPetMode('game')">Target Practice</div>
+    </div>
+    ${petMode==='care' ? renderPetCareContent() : renderTargetGame()}
+  `;
+}
+
+function setPetMode(m){
+  if(petMode==='game' && m!=='game') stopGame();
+  petMode = m;
+  render();
+}
+
+function renderPetCareContent(){
+  const accList = [
+    {id:"scarf", icon:"🧣", name:"Scarf", need:"3-day streak", unlocked: state.streak>=3},
+    {id:"crown", icon:"🍃", name:"Leaf crown", need:"10 tasks done", unlocked: state.totalCompleted>=10},
+    {id:"hat", icon:"☔", name:"Rain hat", need:"7 check-ins", unlocked: state.checkinsDone>=7},
+  ];
+  return `
+    <div class="pet-hero" onclick="tapPet(this)">
+      ${petSVG(170,"breathing")}
+      <div class="pet-name" contenteditable="true" onclick="event.stopPropagation()" onblur="renamePet(this.textContent)" style="outline:none;border-bottom:2px dashed var(--sky-mist);">${state.petName}</div>
+      <div class="pet-stage">${stage()} · tap name to rename</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="lbl">Energy</div><div class="bar-track"><div class="bar-fill" style="width:${state.energy}%"></div></div></div>
+      <div class="stat"><div class="lbl">Warmth</div><div class="bar-track"><div class="bar-fill" style="width:${state.warmth}%;background:var(--clay-blush)"></div></div></div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-primary" style="flex:1;" onclick="feedPet()">🍓 Feed (5 coins)</button>
+      <button class="btn btn-soft" style="flex:1;" onclick="playWithPet()">🎾 Play</button>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--ink-faint);font-weight:700;margin-bottom:6px;">You have ${state.coins} coins</div>
+
+    <div class="section-title">Accessories</div>
+    <div class="acc-grid">
+      ${accList.map(a=>`
+        <div class="acc-item ${a.unlocked?'unlocked':''} ${state.accessoryEquipped===a.id?'equipped':''}"
+             onclick="${a.unlocked?`equipAccessory('${a.id}')`:''}">
+          <div class="icon">${a.icon}</div>
+          <span class="name">${a.unlocked? a.name : 'Locked'}</span>
+          ${!a.unlocked?`<span class="name" style="color:var(--ink-faint);opacity:.7;">${a.need}</span>`:''}
+        </div>`).join("")}
+    </div>
+  `;
+}
+function feedPet(){
+  if(state.coins<5) return;
+  state.coins-=5; state.energy=clamp(state.energy+15);
+  bounceMini(); render();
+}
+function playWithPet(){
+  state.warmth=clamp(state.warmth+6);
+  bounceMini(); render();
+}
+function equipAccessory(id){
+  state.accessoryEquipped = state.accessoryEquipped===id ? null : id;
+  render();
+}
+function renamePet(name){
+  const n = name.trim();
+  if(n) state.petName = n;
+  render();
+}
+
+/* ---------------- TARGET PRACTICE ---------------- */
+let gameTickInterval = null;
+let gameSpawnInterval = null;
+let gameScore = 0;
+let gameTimeLeft = 30;
+let gameRunning = false;
+
+function renderTargetGame(){
+  return `
+    <div class="card game-card">
+      <div class="game-header">
+        <div class="game-stats">
+          <div><div class="g-lbl">Score</div><div class="g-val" id="gameScore">${gameScore}</div></div>
+          <div><div class="g-lbl">Time</div><div class="g-val" id="gameTime">${gameTimeLeft}s</div></div>
+          <div><div class="g-lbl">Best</div><div class="g-val">${state.gameBestScore}</div></div>
+        </div>
+        <button class="btn btn-primary" id="gameStartBtn" onclick="startGame()">${gameRunning ? "Restart" : "Start round"}</button>
+      </div>
+      <div class="target-area" id="targetArea">
+        ${gameRunning ? "" : `<div class="game-hint">Tap "Start round" — pop the targets as they appear. 30 seconds, no score pressure, just pop.</div>`}
+      </div>
+      <div style="text-align:center;font-size:11.5px;color:var(--ink-faint);font-weight:700;margin-top:10px;">A quick reset for your hands and your head.</div>
+    </div>
+  `;
+}
+
+function startGame(){
+  const area = document.getElementById("targetArea");
+  if(!area) return;
+  area.innerHTML = "";
+  gameScore = 0;
+  gameTimeLeft = 30;
+  gameRunning = true;
+  updateGameStats();
+  const btn = document.getElementById("gameStartBtn");
+  if(btn) btn.textContent = "Restart";
+
+  clearInterval(gameTickInterval);
+  clearInterval(gameSpawnInterval);
+
+  gameTickInterval = setInterval(()=>{
+    gameTimeLeft--;
+    updateGameStats();
+    if(gameTimeLeft<=0) endGame();
+  }, 1000);
+
+  gameSpawnInterval = setInterval(spawnTarget, 700);
+  spawnTarget();
+}
+
+function spawnTarget(){
+  const area = document.getElementById("targetArea");
+  if(!area){ clearInterval(gameSpawnInterval); return; }
+  const el = document.createElement("div");
+  el.className = "target";
+  el.textContent = ["🎯","🫧","🍃","⭐"][Math.floor(Math.random()*4)];
+  const size = 50;
+  const maxX = Math.max(0, area.clientWidth - size);
+  const maxY = Math.max(0, area.clientHeight - size);
+  el.style.left = (Math.random()*maxX) + "px";
+  el.style.top = (Math.random()*maxY) + "px";
+
+  const lifespan = setTimeout(()=>{ if(el.parentNode) el.remove(); }, 1400);
+  el.onclick = ()=>{
+    clearTimeout(lifespan);
+    el.classList.add("popped");
+    gameScore++;
+    updateGameStats();
+    setTimeout(()=>{ if(el.parentNode) el.remove(); }, 160);
+  };
+  area.appendChild(el);
+}
+
+function updateGameStats(){
+  const s = document.getElementById("gameScore"); if(s) s.textContent = gameScore;
+  const t = document.getElementById("gameTime"); if(t) t.textContent = gameTimeLeft + "s";
+}
+
+function endGame(){
+  clearInterval(gameTickInterval); clearInterval(gameSpawnInterval);
+  gameTickInterval = null; gameSpawnInterval = null;
+  gameRunning = false;
+  const isNewBest = gameScore > state.gameBestScore;
+  if(isNewBest) state.gameBestScore = gameScore;
+  const area = document.getElementById("targetArea");
+  if(area){
+    area.innerHTML = `
+      <div class="game-end">
+        <div style="font-size:30px;">${isNewBest ? "🏆" : "🌿"}</div>
+        <div style="font-family:'Fredoka';font-weight:600;font-size:18px;margin-top:4px;">${isNewBest ? "New personal best — " : "Nice round — "}${gameScore} popped</div>
+        <div style="font-size:12.5px;color:var(--ink-faint);font-weight:700;margin-top:4px;">${state.petName} feels a little lighter too.</div>
+        <button class="btn btn-primary" style="margin-top:14px;" onclick="startGame()">Play again</button>
+      </div>`;
+  }
+  const btn = document.getElementById("gameStartBtn");
+  if(btn) btn.textContent = "Start round";
+  state.warmth = clamp(state.warmth+4);
+  bounceMini();
+}
+
+function stopGame(){
+  clearInterval(gameTickInterval); clearInterval(gameSpawnInterval);
+  gameTickInterval = null; gameSpawnInterval = null;
+  gameRunning = false;
+}
+
+
+/* ---------------- SAFE SPACE ---------------- */
+let safeMode = "write";
+function renderSafe(){
+  return `
+    <div class="crisis-link" onclick="toggleCrisisPanel()">💙 Need to talk to someone right now?</div>
+    <div class="privacy-note">Private by default. Entries here are never scored or shown to your pet — this space isn't tracked for streaks. You can delete anything, anytime.</div>
+    <div class="mode-toggle">
+      <div class="mode-btn ${safeMode==='write'?'active':''}" onclick="setSafeMode('write')">Write</div>
+      <div class="mode-btn ${safeMode==='talk'?'active':''}" onclick="setSafeMode('talk')">AI Companion</div>
+    </div>
+    <div id="safeContent"></div>
+  `;
+}
+function toggleCrisisPanel(){
+  showCrisisPanel = !showCrisisPanel;
+  const overlay = document.getElementById("supportOverlay");
+  if(overlay) overlay.style.display = showCrisisPanel ? "flex" : "none";
+}
+function setSafeMode(m){ safeMode=m; render(); }
+function afterSafeRender(){
+  const box = document.getElementById("safeContent");
+  if(safeMode==="write"){
+    box.innerHTML = `
+      <textarea id="journalInput" placeholder="What's on your mind?" oninput="maybeShowPrompt()"></textarea>
+      <div id="promptChipWrap"></div>
+      <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="saveJournal()">Save entry</button>
+      <div class="section-title">Past entries</div>
+      ${state.journal.length===0 ? `<div class="empty">Nothing written yet.</div>` :
+        state.journal.slice().reverse().map(j=>`<div class="journal-entry"><div class="date">${j.date}</div>${j.text}</div>`).join("")}
+    `;
+    clearTimeout(window._promptTimer);
+    window._promptTimer = setTimeout(()=>{
+      const ta = document.getElementById("journalInput");
+      const chip = document.getElementById("promptChipWrap");
+      if(ta && chip && !ta.value.trim()){
+        chip.innerHTML = `<span class="prompt-chip" onclick="usePrompt()">What's taking up space in your head right now?</span>`;
+      }
+    }, 3500);
+  } else {
+    box.innerHTML = `
+      <div class="chat-window" id="chatWindow">
+        ${state.chat.map(m=>`<div class="msg ${m.role==='user'?'user':'ai'}">${m.attachmentName?`<div class="msg-attach">📎 ${m.attachmentName}</div>`:""}${m.text}</div>`).join("")}
+      </div>
+      <div id="chatAttachmentPreview"></div>
+      <div class="chat-input-row">
+        <input type="file" id="chatFileInput" style="display:none;" accept="image/*,.pdf,.txt,.md" onchange="handleChatFileSelect(event)">
+        <button class="attach-btn" onclick="document.getElementById('chatFileInput').click()" title="Attach a file">📎</button>
+        <input id="chatInput" placeholder="Type here..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-primary" onclick="sendChat()">Send</button>
+      </div>
+    `;
+    renderChatAttachmentPreview();
+  }
+}
+function usePrompt(){
+  const ta = document.getElementById("journalInput");
+  ta.value = "What's taking up space in your head right now?\n\n";
+  ta.focus();
+  document.getElementById("promptChipWrap").innerHTML = "";
+}
+function maybeShowPrompt(){}
+function saveJournal(){
+  const ta = document.getElementById("journalInput");
+  if(!ta.value.trim()) return;
+  state.journal.push({date: new Date().toLocaleDateString(), text: ta.value.trim()});
+  render();
+}
+
+let pendingChatAttachment = null;
+
+function handleChatFileSelect(e){
+  const file = e.target.files[0];
+  e.target.value = ""; // allow re-selecting the same file later
+  if(!file) return;
+  const isImage = file.type.startsWith("image/");
+  const isPdf = file.type === "application/pdf";
+  const isText = file.type.startsWith("text/") || /\.(txt|md)$/i.test(file.name);
+  const reader = new FileReader();
+  reader.onload = function(){
+    if(isImage || isPdf){
+      pendingChatAttachment = {
+        name: file.name,
+        kind: isImage ? "image" : "pdf",
+        mediaType: file.type || (isPdf ? "application/pdf" : "image/png"),
+        base64: reader.result.split(",")[1],
+      };
+    } else if(isText){
+      pendingChatAttachment = {name: file.name, kind:"text", textContent: reader.result};
+    } else {
+      pendingChatAttachment = {name: file.name, kind:"other"};
+    }
+    renderChatAttachmentPreview();
+  };
+  if(isImage || isPdf) reader.readAsDataURL(file);
+  else reader.readAsText(file);
+}
+
+function renderChatAttachmentPreview(){
+  const wrap = document.getElementById("chatAttachmentPreview");
+  if(!wrap) return;
+  wrap.innerHTML = pendingChatAttachment
+    ? `<div class="attach-chip">📎 ${pendingChatAttachment.name} <span class="x" onclick="clearChatAttachment()">✕</span></div>`
+    : "";
+}
+function clearChatAttachment(){
+  pendingChatAttachment = null;
+  renderChatAttachmentPreview();
+}
+
+async function sendChat(){
+  const inp = document.getElementById("chatInput");
+  const text = inp.value.trim();
+  const attachment = pendingChatAttachment;
+  if(!text && !attachment) return;
+
+  state.chat.push({
+    role: "user",
+    text: text || "",
+    attachmentName: attachment ? attachment.name : null,
+    _attachment: attachment, // kept locally for the API call, not sent to API as-is
+  });
+  inp.value = "";
+  pendingChatAttachment = null;
+  render();
+
+  const win = document.getElementById("chatWindow");
+  if(win){
+    win.innerHTML += `<div class="msg ai" id="typingMsg">···</div>`;
+    win.scrollTop = win.scrollHeight;
+  }
+
+  try{
+    const history = state.chat.map(m=>{
+      if(m.role==="user" && m._attachment){
+        const blocks = [];
+        const a = m._attachment;
+        if(a.kind==="image"){
+          blocks.push({type:"image", source:{type:"base64", media_type:a.mediaType, data:a.base64}});
+        } else if(a.kind==="pdf"){
+          blocks.push({type:"document", source:{type:"base64", media_type:"application/pdf", data:a.base64}});
+        } else if(a.kind==="text"){
+          blocks.push({type:"text", text:`[Attached file: ${a.name}]\n\n${a.textContent}`});
+        } else {
+          blocks.push({type:"text", text:`[Attached file: ${a.name} — content type not directly readable]`});
+        }
+        if(m.text) blocks.push({type:"text", text:m.text});
+        return {role:"user", content: blocks};
+      }
+      return {role: m.role==="user" ? "user" : "assistant", content: m.text};
+    });
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:1000,
+        system:"You are a warm, supportive listener inside a student wellbeing app called Sproutly. You are not a therapist and never claim to be one. Keep replies short (2-4 sentences), gentle, validating, and conversational — never clinical, never preachy. If the student shares a file (like a photo, notes, or a document), acknowledge it naturally and respond to its content if relevant. If the student expresses serious distress or crisis, gently encourage them to reach out to a crisis line or trusted person — in Singapore, Samaritans of Singapore (SOS) 24-hour hotline is 1767, or 995/999 if there's immediate danger.",
+        messages: history,
+      })
+    });
+    const data = await response.json();
+    const aiText = (data.content||[]).map(b=>b.text||"").join("").trim() || "I'm here — tell me more?";
+    state.chat.push({role:"ai", text: aiText});
+  }catch(err){
+    state.chat.push({role:"ai", text:"I'm having trouble connecting right now, but I'm still here — want to try writing it in your journal instead?"});
+  }
+  render();
+}
+
+/* ---------------- PEERS ---------------- */
+function renderPeers(){
+  return `
+    <div class="mode-toggle">
+      <div class="mode-btn ${peerMode==='bulletin'?'active':''}" onclick="setPeerMode('bulletin')">Bulletin board</div>
+      <div class="mode-btn ${peerMode==='stories'?'active':''}" onclick="setPeerMode('stories')">Peer stories</div>
+    </div>
+    <div id="peerContent">
+      ${peerMode==="bulletin" ? renderBulletin() : renderPeerStories()}
+    </div>
+  `;
+}
+function setPeerMode(m){ peerMode = m; render(); }
+
+function renderBulletin(){
+  return `
+    <div style="font-size:11px;color:var(--ink-faint);font-weight:700;margin-bottom:12px;">Upcoming talks and events on youth stress and wellbeing — curated, not user-posted.</div>
+    ${state.events.map(e=>`
+      <div class="card event-card">
+        <div class="event-top">
+          <span class="tag-pill">${e.tag}</span>
+          <span class="event-type">${e.type}</span>
+        </div>
+        <div class="event-title">${e.title}</div>
+        <div class="event-date">${e.date}</div>
+        <div class="event-desc">${e.desc}</div>
+      </div>
+    `).join("")}
+  `;
+}
+
+function renderPeerStories(){
+  return `
+    <div class="add-task-row">
+      <input id="postInput" placeholder="Share something encouraging..." onkeydown="if(event.key==='Enter')addPost()">
+      <button class="btn btn-primary" onclick="addPost()">Post</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink-faint);margin:10px 0 14px 0;text-align:center;">Posts are anonymous. Optional, and separate from your personal progress.</div>
+    ${state.posts.map(p=>`
+      <div class="card post-card">
+        <div class="who">${p.who}</div>
+        <div class="txt">${p.text}</div>
+        <div class="post-actions">
+          <span class="like-btn ${p.likedByMe?'liked':''}" onclick="toggleLike(${p.id})">${p.likedByMe?'💚':'🤍'} ${p.likes}</span>
+          <span class="comment-toggle" onclick="toggleCommentBox(${p.id})">💬 ${p.comments.length} comment${p.comments.length===1?'':'s'}</span>
+        </div>
+        ${openComments[p.id] ? `
+          <div class="comment-section">
+            ${p.comments.map(c=>`<div class="comment-item"><span class="c-who">${c.who}:</span> ${c.text}</div>`).join("")}
+            <div class="add-task-row" style="margin-top:8px;">
+              <input id="commentInput-${p.id}" placeholder="Add a supportive comment..." onkeydown="if(event.key==='Enter')addComment(${p.id})">
+              <button class="btn btn-soft" onclick="addComment(${p.id})">Reply</button>
+            </div>
+          </div>` : ""}
+      </div>
+    `).join("")}
+  `;
+}
+
+function addPost(){
+  const inp = document.getElementById("postInput");
+  if(!inp.value.trim()) return;
+  state.posts.unshift({id: state.nextPostId++, who:"you (anon)", text: inp.value.trim(), likes:0, likedByMe:false, comments:[]});
+  inp.value="";
+  render();
+}
+function toggleLike(id){
+  const p = state.posts.find(x=>x.id===id);
+  if(!p) return;
+  p.likedByMe = !p.likedByMe;
+  p.likes += p.likedByMe ? 1 : -1;
+  render();
+}
+function toggleCommentBox(id){
+  openComments[id] = !openComments[id];
+  render();
+}
+function addComment(id){
+  const inp = document.getElementById("commentInput-"+id);
+  if(!inp || !inp.value.trim()) return;
+  const p = state.posts.find(x=>x.id===id);
+  p.comments.push({who:"you (anon)", text: inp.value.trim()});
+  openComments[id] = true;
+  render();
+}
+
+/* ---------------- MISC ---------------- */
+function bounceMini(){
+  const mp = document.getElementById("miniPet");
+  mp.classList.remove("bouncing"); void mp.offsetWidth; mp.classList.add("bouncing");
+}
+function tapPet(heroEl){
+  const svg = heroEl.querySelector("svg");
+  if(svg){ svg.classList.remove("jump-tap"); void svg.offsetWidth; svg.classList.add("jump-tap"); }
+  const emojis = ["✨","😄","💫","🎉","🥰"];
+  const spark = document.createElement("div");
+  spark.className = "pet-sparkle";
+  spark.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  heroEl.appendChild(spark);
+  setTimeout(()=>{ if(spark.parentNode) spark.remove(); }, 900);
+  bounceMini();
+}
+function simulateNextDay(){
+  if(!state.checkedInToday){ state.streak = 0; state.energy = clamp(state.energy-12); state.warmth = clamp(state.warmth-8); }
+  else { state.energy = clamp(state.energy-4); state.warmth = clamp(state.warmth-2); }
+  state.checkedInToday = false;
+  state.moodToday = null;
+  state.dailyTip = null;
+  state.dayCounter++;
+  if(state.dayCounter % 7 === 0){
+    let reopened = 0;
+    state.tasks.forEach(t=>{ if(t.recurring && t.done){ t.done = false; reopened++; } });
+    if(reopened>0) showToast(`🔁 New week — ${reopened} recurring task(s) reset.`);
+  }
+  render();
+}
+
+/* ---------------- ERROR SAFETY NET ---------------- */
+window.addEventListener("error", function(e){
+  console.error("Sproutly error:", e.error || e.message);
+  const c = document.getElementById("content");
+  if(c) c.innerHTML = `<div class="empty" style="color:#b3552c;">Something went wrong loading this screen.<br><span style="font-size:11px;opacity:.8;">Check the browser console for details, or reload.</span></div>`;
+});
+window.addEventListener("unhandledrejection", function(e){
+  console.error("Sproutly promise error:", e.reason);
+});
+
+render();
+initOnboarding();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((err) => {
+      console.error("Service worker registration failed:", err);
+    });
+  });
+}
+</script>
+</body>
+</html>
