@@ -6,7 +6,7 @@
 <title>Sproutly</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#8FBF9F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -281,6 +281,15 @@ textarea:focus{outline:none;border-color:var(--sprig-green);}
 .a11y-btn{background:var(--card);border:2px solid var(--sky-mist);border-radius:10px;padding:5px 9px;font-family:'Fredoka';font-weight:600;font-size:12px;cursor:pointer;color:var(--ink-soft);}
 .a11y-btn.active{background:var(--sprig-green);border-color:var(--sprig-green);color:#fff;}
 .phone.a11y-large .content{zoom:1.16;}
+/* Fallback for browsers without `zoom` support (older Firefox, etc.) */
+@supports not (zoom: 1){
+  .phone.a11y-large .content{
+    transform:scale(1.16);
+    transform-origin:top left;
+    width:calc(100% / 1.16);
+    height:calc(100% / 1.16);
+  }
+}
 
 .onboard-overlay{position:absolute;inset:0;background:rgba(74,70,64,0.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;}
 .support-overlay{position:absolute;inset:0;background:rgba(74,70,64,0.55);display:flex;align-items:center;justify-content:center;z-index:65;padding:24px;}
@@ -404,6 +413,38 @@ let timerInterval = null;
 let ambientSound = "off"; // off | rain | lofi
 let showCrisisPanel = false;
 
+/* ---------------- PERSISTENCE ---------------- */
+// Everything the app tracks (streak, tasks, journal, chat, coins, mood
+// history, calendar, timetable, accessories, attachments, etc.) lives on
+// the `state` object, so saving/restoring that one object is enough to
+// survive a page reload or app relaunch.
+const STORAGE_KEY = "sproutly_state_v1";
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(err){
+    // e.g. private browsing mode with storage disabled, or quota exceeded
+    console.error("Sproutly: couldn't save progress", err);
+  }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    Object.assign(state, saved);
+    // A running timer can't survive a reload (no interval is ticking yet),
+    // so reflect that honestly as "paused" instead of a frozen countdown.
+    if(state.timer && state.timer.running) state.timer.running = false;
+  }catch(err){
+    console.error("Sproutly: couldn't load saved progress, starting fresh", err);
+  }
+}
+
+loadState();
+
 function stage(){
   const t = state.totalCompleted + state.checkinsDone;
   if(t>=30) return "Bloom";
@@ -499,6 +540,7 @@ function render(){
   if(currentTab==="safe") c.innerHTML = renderSafe();
   if(currentTab==="peers") c.innerHTML = renderPeers();
   if(currentTab==="safe") afterSafeRender();
+  saveState();
 }
 
 /* ---------------- ONBOARDING ---------------- */
@@ -1139,6 +1181,10 @@ function tickTimer(){
     return;
   }
   updateTimerDOM();
+  // tickTimer runs every second without calling render(), so save
+  // periodically here too — otherwise a closed tab mid-session would
+  // lose track of how much time was left.
+  if(state.timer.remaining % 5 === 0) saveState();
 }
 
 function updateTimerDOM(){

@@ -10,7 +10,19 @@ const ASSETS_TO_CACHE = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) =>
+      // cache.addAll() fails ALL-OR-NOTHING — if a single asset 404s (e.g. a
+      // missing icon file), the whole install rejects and the SW never
+      // activates, silently killing offline support entirely. Caching each
+      // asset individually means one missing file just gets skipped instead.
+      Promise.all(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn("Sproutly SW: skipped caching (not found?)", url, err);
+          })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
