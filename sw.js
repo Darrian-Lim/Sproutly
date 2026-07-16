@@ -3,6 +3,7 @@ const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png",
   "./icon-512-maskable.png"
@@ -11,10 +12,8 @@ const ASSETS_TO_CACHE = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      // cache.addAll() fails ALL-OR-NOTHING — if a single asset 404s (e.g. a
-      // missing icon file), the whole install rejects and the SW never
-      // activates, silently killing offline support entirely. Caching each
-      // asset individually means one missing file just gets skipped instead.
+      // cache.addAll() fails ALL-OR-NOTHING. Caching each
+      // asset individually ensures one missing file doesn't break the registration.
       Promise.all(
         ASSETS_TO_CACHE.map((url) =>
           cache.add(url).catch((err) => {
@@ -41,16 +40,19 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
 
   // Never intercept calls to the Anthropic API — those must always hit the network.
-  if (req.url.includes("api.anthropic.com")) return;
+  if (req.url.includes("api.anthropic.com")) {
+    return;
+  }
 
   if (req.mode === "navigate") {
     event.respondWith(
       fetch(req).catch(() => caches.match("./index.html"))
     );
-    return;
+  } else {
+    event.respondWith(
+      caches.match(req).then((cachedRes) => {
+        return cachedRes || fetch(req);
+      })
+    );
   }
-
-  event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req))
-  );
 });
