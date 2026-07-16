@@ -499,6 +499,28 @@ function render(){
   if(currentTab==="safe") c.innerHTML = renderSafe();
   if(currentTab==="peers") c.innerHTML = renderPeers();
   if(currentTab==="safe") afterSafeRender();
+  saveState();
+}
+
+/* ---------------- PERSISTENCE ---------------- */
+const STORAGE_KEY = "sproutly-state-v1";
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(err){
+    console.error("Sproutly: couldn't save state", err);
+  }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    // Merge onto defaults so new fields added in future updates don't break old saves.
+    state = Object.assign({}, state, saved);
+  }catch(err){
+    console.error("Sproutly: couldn't load saved state, starting fresh", err);
+  }
 }
 
 /* ---------------- ONBOARDING ---------------- */
@@ -1570,12 +1592,10 @@ async function sendChat(){
       }
       return {role: m.role==="user" ? "user" : "assistant", content: m.text};
     });
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("/api/chat", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"claude-sonnet-4-6",
-        max_tokens:1000,
         system:"You are a warm, supportive listener inside a student wellbeing app called Sproutly. You are not a therapist and never claim to be one. Keep replies short (2-4 sentences), gentle, validating, and conversational — never clinical, never preachy. If the student shares a file (like a photo, notes, or a document), acknowledge it naturally and respond to its content if relevant. If the student expresses serious distress or crisis, gently encourage them to reach out to a crisis line or trusted person — in Singapore, Samaritans of Singapore (SOS) 24-hour hotline is 1767, or 995/999 if there's immediate danger.",
         messages: history,
       })
@@ -1716,6 +1736,7 @@ window.addEventListener("unhandledrejection", function(e){
   console.error("Sproutly promise error:", e.reason);
 });
 
+loadState();
 render();
 initOnboarding();
 

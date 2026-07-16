@@ -1,0 +1,9 @@
+{
+  "name": "sproutly",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sproutly - a gentle daily companion for mood, tasks, and self-care.",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
