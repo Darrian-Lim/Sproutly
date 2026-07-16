@@ -1601,6 +1601,10 @@ async function sendChat(){
       })
     });
     const data = await response.json();
+    if(!response.ok){
+      console.error("Sproutly chat API error:", response.status, data);
+      throw new Error(data.error?.message || `Chat API returned ${response.status}`);
+    }
     const aiText = (data.content||[]).map(b=>b.text||"").join("").trim() || "I'm here — tell me more?";
     state.chat.push({role:"ai", text: aiText});
   }catch(err){
