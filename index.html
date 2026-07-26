@@ -377,8 +377,6 @@ textarea:focus{outline:none;border-color:var(--sprig-green);}
 </head>
 <body>
 
-<button class="dev-btn" onclick="simulateNextDay()">+1 day (demo)</button>
-<button class="dev-btn" style="top:32px;" onclick="demoEvolvePet()">Evolve pet (demo)</button>
 
 <div class="phone" id="phoneFrame">
   <div class="notch"></div>
@@ -583,6 +581,32 @@ let timerInterval = null;
 let ambientSound = "off"; // off | rain | lofi
 let showCrisisPanel = false;
 
+/* ---------------- PERSISTENCE ---------------- */
+const STORAGE_KEY = "sproutly_save_v1";
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({state, authAccounts, currentUser}));
+  }catch(e){
+    console.warn("Sproutly: could not save progress", e);
+  }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    // Object.assign onto the existing defaults (not replacing state outright) so
+    // any new fields added in future app updates still get sensible defaults
+    // instead of being undefined for players with an older save.
+    if(saved.state) Object.assign(state, saved.state);
+    if(Array.isArray(saved.authAccounts)) authAccounts = saved.authAccounts;
+    if(saved.currentUser) currentUser = saved.currentUser;
+  }catch(e){
+    console.warn("Sproutly: could not load saved progress", e);
+  }
+}
+loadState();
+
 function stage(){
   const t = state.totalCompleted + state.checkinsDone;
   if(t>=30) return "Bloom";
@@ -642,6 +666,7 @@ function getSpeciesHeadSVG(species, st, bodyColor){
     if(st==="Bloom"){ leaf = ears + whiskers + `<path d="M92 26 L100 34 L108 26 L104 20 L96 20Z" fill="#E8B65A"/>`; }
   } else if(species==="bunny"){
     const earsSmall = `<path d="M78 40 Q68 6 82 4 Q94 8 90 40Z" fill="${bodyColor}"/><path d="M122 40 Q132 6 118 4 Q106 8 110 40Z" fill="${bodyColor}"/><path d="M80 34 Q74 12 82 10 Q90 13 87 34Z" fill="#F2C4B3"/><path d="M120 34 Q126 12 118 10 Q110 13 113 34Z" fill="#F2C4B3"/>`;
+    if(st==="Seed"){ leaf = earsSmall; }
     if(st==="Sprout"){ leaf = earsSmall; }
     if(st==="Sapling"){ leaf = earsSmall; }
     if(st==="Bloom"){ leaf = earsSmall + `<circle cx="100" cy="8" r="7" fill="#F2C4B3"/><circle cx="90" cy="12" r="5" fill="#E8B65A"/><circle cx="110" cy="12" r="5" fill="#E8B65A"/>`; }
@@ -785,6 +810,7 @@ function render(){
   if(currentTab==="safe") c.innerHTML = renderSafe();
   if(currentTab==="peers") c.innerHTML = renderPeers();
   if(currentTab==="safe") afterSafeRender();
+  saveState();
 }
 
 /* ---------------- ONBOARDING ---------------- */
@@ -2743,6 +2769,10 @@ window.addEventListener("unhandledrejection", function(e){
   console.error("Sproutly promise error:", e.reason);
 });
 
+if(currentUser){
+  const authOverlay = document.getElementById("authOverlay");
+  if(authOverlay) authOverlay.style.display = "none";
+}
 render();
 initOnboarding();
 const contentEl = document.getElementById("content");
